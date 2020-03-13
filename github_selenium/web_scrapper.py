@@ -99,7 +99,7 @@ def create_higher_order_users(order, path_prefix=PATH_PREFIX_DEFAULT):
                 o.write(follower + '\n')
 
 if __name__ == '__main__':
-    for order in range(2):
+    for order in range(1):
         create_higher_order_users(order)
 
     with open(f'{PATH_PREFIX_DEFAULT}2.txt') as f, open('data/output.csv', 'w') as o:
