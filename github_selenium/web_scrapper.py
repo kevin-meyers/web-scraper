@@ -1,5 +1,7 @@
 import csv
 
+from pybloomfilter import BloomFilter
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -21,6 +23,8 @@ browser = webdriver.Chrome(
     executable_path=r'/home/kevin/Downloads/chromedriver',
     options=options
 )
+
+seen_usernames = BloomFilter(10000, .03)
 
 def make_url(user, tab):
     return f'https://github.com/{user}?tab={tab}'
@@ -74,9 +78,15 @@ def get_followers(username):
         GITHUB_USERNAME_TITLE
     )
 
-    follower_usernames = [x.text for x in title_elements]
+    yield username
+    for element in title_elements:
+        follower = element.text
+        if follower in seen_usernames:
+            continue
 
-    return follower_usernames
+        seen_usernames.add(follower)
+        yield follower
+
 
 def create_higher_order_users(order, path_prefix=PATH_PREFIX_DEFAULT):
     initial_path = f'{path_prefix}{order}.txt'
@@ -84,13 +94,13 @@ def create_higher_order_users(order, path_prefix=PATH_PREFIX_DEFAULT):
     with open(initial_path) as f, open(higher_order_path, 'w') as o:
         for line in f.readlines():
             username = line.strip()
-            followers = get_followers(username)
-            for follower in followers:
+            followers_gen = get_followers(username)
+            for follower in followers_gen:
                 o.write(follower + '\n')
 
 if __name__ == '__main__':
-    #for order in range(4):
-    #    create_higher_order_users(order)
+    for order in range(2):
+        create_higher_order_users(order)
 
     with open(f'{PATH_PREFIX_DEFAULT}2.txt') as f, open('data/output.csv', 'w') as o:
         headers = ['username', 'repo_name', 'most_used_language']
